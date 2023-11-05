@@ -7,6 +7,12 @@
 #ifndef STG_META_OSCILLATOR_CONDITIONS_MQH
 #define STG_META_OSCILLATOR_CONDITIONS_MQH
 
+// Oscillator conditions.
+enum ENUM_STG_META_OSCILLATOR_CONDITIONS_COND {
+  STG_META_OSCILLATOR_CONDITIONS_COND_0_NONE = 0,                    // None
+  STG_META_OSCILLATOR_CONDITIONS_COND_IS_PEAK = TRADE_COND_IS_PEAK,  // Oscillator value is at peak level
+};
+
 enum ENUM_STG_META_OSCILLATOR_CONDITIONS_TYPE {
   STG_META_OSCILLATOR_CONDITIONS_TYPE_0_NONE = 0,  // (None)
   STG_META_OSCILLATOR_CONDITIONS_TYPE_AC,          // AC: Accelerator/Decelerator
@@ -38,10 +44,13 @@ enum ENUM_STG_META_OSCILLATOR_CONDITIONS_TYPE {
 // User input params.
 INPUT2_GROUP("Meta Oscillator Conditions strategy: main params");
 INPUT2 ENUM_STG_META_OSCILLATOR_CONDITIONS_TYPE Meta_Oscillator_Conditions_Type =
-    STG_META_OSCILLATOR_CONDITIONS_TYPE_STDDEV;                                  // Oscillator type
-INPUT2 ENUM_STRATEGY Meta_Oscillator_Conditions_Strategy_Dn = STRAT_OSCILLATOR;  // Strategy when oscillator goes down
-INPUT2 ENUM_STRATEGY Meta_Oscillator_Conditions_Strategy_Up = STRAT_CHAIKIN;     // Strategy when oscillator goes up
-INPUT2 ENUM_TIMEFRAMES Meta_Oscillator_Conditions_Tf = PERIOD_D1;                // Timeframe for oscillator
+    STG_META_OSCILLATOR_CONDITIONS_TYPE_STDDEV;  // Oscillator type
+INPUT2 ENUM_STG_META_OSCILLATOR_CONDITIONS_COND Meta_Oscillator_Conditions_Condition =
+    STG_META_OSCILLATOR_CONDITIONS_COND_IS_PEAK;  // Oscillator ondition
+INPUT2 ENUM_STRATEGY Meta_Oscillator_Conditions_Strategy_False =
+    STRAT_OSCILLATOR_RANGE;                                                 // Strategy when condition is False
+INPUT2 ENUM_STRATEGY Meta_Oscillator_Conditions_Strategy_True = STRAT_RSI;  // Strategy when condition is True
+INPUT2 ENUM_TIMEFRAMES Meta_Oscillator_Conditions_Tf = PERIOD_D1;           // Timeframe for oscillator
 INPUT3_GROUP("Meta Oscillator Conditions strategy: common params");
 INPUT3 float Meta_Oscillator_Conditions_LotSize = 0;                    // Lot size
 INPUT3 int Meta_Oscillator_Conditions_SignalOpenMethod = 0;             // Signal open method
@@ -223,8 +232,8 @@ class Stg_Meta_Oscillator_Conditions : public Strategy {
    */
   void OnInit() {
     // Initialize strategies.
-    StrategyAdd(::Meta_Oscillator_Conditions_Strategy_Dn, 0);
-    StrategyAdd(::Meta_Oscillator_Conditions_Strategy_Up, 1);
+    StrategyAdd(::Meta_Oscillator_Conditions_Strategy_False, 0);
+    StrategyAdd(::Meta_Oscillator_Conditions_Strategy_True, 1);
     // Initialize indicators.
     switch (::Meta_Oscillator_Conditions_Type) {
       case STG_META_OSCILLATOR_CONDITIONS_TYPE_AC:  // AC
@@ -490,6 +499,48 @@ class Stg_Meta_Oscillator_Conditions : public Strategy {
   }
 
   /**
+   * Returns the highest bar's index (shift).
+   */
+  template <typename T>
+  int GetIndiHighest(int count = WHOLE_ARRAY, int start_bar = 0) {
+    IndicatorBase *_indi = GetIndicator(::Meta_Oscillator_Conditions_Type);
+    int max_idx = -1;
+    double max = -DBL_MAX;
+    int last_bar = count == WHOLE_ARRAY ? (int)(_indi.GetBarShift(_indi.GetLastBarTime())) : (start_bar + count - 1);
+
+    for (int shift = start_bar; shift <= last_bar; ++shift) {
+      double value = _indi.GetEntry(shift).GetMax<T>(_indi.GetModeCount());
+      if (value > max) {
+        max = value;
+        max_idx = shift;
+      }
+    }
+
+    return max_idx;
+  }
+
+  /**
+   * Returns the lowest bar's index (shift).
+   */
+  template <typename T>
+  int GetIndiLowest(int count = WHOLE_ARRAY, int start_bar = 0) {
+    IndicatorBase *_indi = GetIndicator(::Meta_Oscillator_Conditions_Type);
+    int min_idx = -1;
+    double min = DBL_MAX;
+    int last_bar = count == WHOLE_ARRAY ? (int)(_indi.GetBarShift(_indi.GetLastBarTime())) : (start_bar + count - 1);
+
+    for (int shift = start_bar; shift <= last_bar; ++shift) {
+      double value = _indi.GetEntry(shift).GetMin<T>(_indi.GetModeCount());
+      if (value < min) {
+        min = value;
+        min_idx = shift;
+      }
+    }
+
+    return min_idx;
+  }
+
+  /**
    * Gets strategy.
    */
   Ref<Strategy> GetStrategy(uint _shift = 0) {
@@ -498,17 +549,18 @@ class Stg_Meta_Oscillator_Conditions : public Strategy {
     uint _ishift = _shift;  // @fixme
     bool _result = true;
     // bool _result = _indi.GetFlag(INDI_ENTRY_FLAG_IS_VALID, _ishift) && _indi.GetFlag(INDI_ENTRY_FLAG_IS_VALID,
-    // _ishift + 3);
+    // _ishift + 1);
     Ref<Strategy> _strat_ref;
-    if (!_result) {
-      // Returns false when indicator data is not valid.
-      return _strat_ref;
+    switch (::Meta_Oscillator_Conditions_Condition) {
+      case STG_META_OSCILLATOR_CONDITIONS_COND_IS_PEAK:
+        _result &= _indi[_ishift][0] >= GetIndiHighest<double>(4, _ishift) ||
+                   _indi[_ishift][0] <= GetIndiLowest<double>(4, _ishift);
+        break;
+      case STG_META_OSCILLATOR_CONDITIONS_COND_0_NONE:
+      default:
+        break;
     }
-    if (_indi.IsDecreasing(1, 0, _ishift)) {
-      _strat_ref = strats.GetByKey(0);
-    } else if (_indi.IsIncreasing(1, 0, _ishift)) {
-      _strat_ref = strats.GetByKey(1);
-    }
+    _strat_ref = strats.GetByKey(_result ? 1 : 0);
     return _strat_ref;
   }
 
