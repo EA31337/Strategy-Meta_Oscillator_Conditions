@@ -43,14 +43,14 @@ enum ENUM_STG_META_OSCILLATOR_CONDITIONS_TYPE {
 
 // User input params.
 INPUT2_GROUP("Meta Oscillator Conditions strategy: main params");
-INPUT2 ENUM_STG_META_OSCILLATOR_CONDITIONS_TYPE Meta_Oscillator_Conditions_Type =
-    STG_META_OSCILLATOR_CONDITIONS_TYPE_STDDEV;  // Oscillator type
 INPUT2 ENUM_STG_META_OSCILLATOR_CONDITIONS_COND Meta_Oscillator_Conditions_Condition =
-    STG_META_OSCILLATOR_CONDITIONS_COND_IS_PEAK;  // Oscillator ondition
+    STG_META_OSCILLATOR_CONDITIONS_COND_IS_PEAK;  // Oscillator condition
 INPUT2 ENUM_STRATEGY Meta_Oscillator_Conditions_Strategy_False =
     STRAT_OSCILLATOR_RANGE;                                                 // Strategy when condition is False
 INPUT2 ENUM_STRATEGY Meta_Oscillator_Conditions_Strategy_True = STRAT_RSI;  // Strategy when condition is True
-INPUT2 ENUM_TIMEFRAMES Meta_Oscillator_Conditions_Tf = PERIOD_D1;           // Timeframe for oscillator
+INPUT2 ENUM_STG_META_OSCILLATOR_CONDITIONS_TYPE Meta_Oscillator_Conditions_Type =
+    STG_META_OSCILLATOR_CONDITIONS_TYPE_STDDEV;                    // Oscillator type
+INPUT2 ENUM_TIMEFRAMES Meta_Oscillator_Conditions_Tf = PERIOD_D1;  // Timeframe for oscillator
 INPUT3_GROUP("Meta Oscillator Conditions strategy: common params");
 INPUT3 float Meta_Oscillator_Conditions_LotSize = 0;                    // Lot size
 INPUT3 int Meta_Oscillator_Conditions_SignalOpenMethod = 0;             // Signal open method
