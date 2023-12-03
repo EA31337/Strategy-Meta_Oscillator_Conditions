@@ -47,9 +47,9 @@ INPUT2 ENUM_STG_META_OSCILLATOR_CONDITIONS_COND Meta_Oscillator_Conditions_Condi
     STG_META_OSCILLATOR_CONDITIONS_COND_IS_PEAK;  // Oscillator condition
 INPUT2 ENUM_STRATEGY Meta_Oscillator_Conditions_Strategy_False =
     STRAT_OSCILLATOR_RANGE;                                                 // Strategy when condition is False
-INPUT2 ENUM_STRATEGY Meta_Oscillator_Conditions_Strategy_True = STRAT_RSI;  // Strategy when condition is True
+INPUT2 ENUM_STRATEGY Meta_Oscillator_Conditions_Strategy_True = STRAT_CCI;  // Strategy when condition is True
 INPUT2 ENUM_STG_META_OSCILLATOR_CONDITIONS_TYPE Meta_Oscillator_Conditions_Type =
-    STG_META_OSCILLATOR_CONDITIONS_TYPE_STDDEV;                    // Oscillator type
+    STG_META_OSCILLATOR_CONDITIONS_TYPE_ATR;                       // Oscillator type
 INPUT2 ENUM_TIMEFRAMES Meta_Oscillator_Conditions_Tf = PERIOD_D1;  // Timeframe for oscillator
 INPUT3_GROUP("Meta Oscillator Conditions strategy: common params");
 INPUT3 float Meta_Oscillator_Conditions_LotSize = 0;                    // Lot size
